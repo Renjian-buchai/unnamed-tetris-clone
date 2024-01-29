@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 
+#include <array>
 #include <csignal>
 #include <cstdint>
 #include <iostream>
@@ -63,6 +64,9 @@ void dealloc(SDL_Window*& window, std::vector<SDL_Surface*>& surfaces,
   SDL_Quit();
 }
 
+template <size_t _X, size_t _Y>
+using matrix = std::array<std::array<uint8_t, _Y>, _X>;
+
 int main(int argc, char** argv) {
   (void)argc, (void)argv;
 
@@ -93,8 +97,6 @@ int main(int argc, char** argv) {
     return ret::WINSURFACE_INIT_FAILED;
   }
 
-  (void)windowSurface;
-
   int block = dDM.h / 22;
 
   SDL_Rect playArea = initRect(dDM.h - 2 * block, dDM.h * 10 / 22,
@@ -102,8 +104,18 @@ int main(int argc, char** argv) {
 
   SDL_Rect close = initRect(block, 2 * block, dDM.w - 2 * block, 0);
 
+  uint32_t closeRGB;
+
+  SDL_Point mousePos;
+  mousePos.x = 0;
+  mousePos.y = 0;
+
   uint8_t running = 1;
   SDL_Event event;
+
+  matrix<10, 20> playfield = {0};
+  (void)playfield;
+
   while (running) {
     while (SDL_PollEvent(&event)) {
       switch (event.type) {
@@ -112,6 +124,20 @@ int main(int argc, char** argv) {
           break;
 
         case SDL_MOUSEBUTTONDOWN:
+          SDL_GetMouseState(&mousePos.x, &mousePos.y);
+          if (SDL_PointInRect(&mousePos, &close)) {
+            running = 0;
+          }
+          break;
+
+        case SDL_MOUSEMOTION:
+          SDL_GetMouseState(&mousePos.x, &mousePos.y);
+          if (SDL_PointInRect(&mousePos, &close)) {
+            closeRGB = SDL_MapRGB(windowSurface->format, 255, 15, 15);
+          } else {
+            closeRGB = SDL_MapRGB(windowSurface->format, 150, 15, 15);
+          }
+          break;
 
         default:
           break;
@@ -122,8 +148,7 @@ int main(int argc, char** argv) {
                  SDL_MapRGB(windowSurface->format, 124, 124, 124));
     SDL_FillRect(windowSurface, &playArea,
                  SDL_MapRGB(windowSurface->format, 0, 0, 0));
-    SDL_FillRect(windowSurface, &close,
-                 SDL_MapRGB(windowSurface->format, 200, 15, 15));
+    SDL_FillRect(windowSurface, &close, closeRGB);
     SDL_UpdateWindowSurface(window);
   }
 
