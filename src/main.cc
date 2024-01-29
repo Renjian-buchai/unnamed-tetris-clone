@@ -15,6 +15,15 @@ enum ret : uint8_t {
   WINSURFACE_INIT_FAILED
 };
 
+SDL_Rect initRect(int h = 0, int w = 0, int x = 0, int y = 0) {
+  SDL_Rect toRet;
+  toRet.h = h;
+  toRet.w = w;
+  toRet.x = x;
+  toRet.y = y;
+  return toRet;
+}
+
 SDL_Window* window;
 std::vector<SDL_Surface*> surfaces;
 std::vector<SDL_Texture*> textures;
@@ -30,7 +39,7 @@ void dealloc(SDL_Window*&, std::vector<SDL_Surface*>&,
 
 void dealloc(SDL_Window*& window, std::vector<SDL_Surface*>& surfaces,
              std::vector<SDL_Texture*>&& textures = {},
-             SDL_Renderer*&& renderer) {
+             SDL_Renderer*&& renderer = nullptr) {
   for (SDL_Surface* surface : surfaces) {
     SDL_FreeSurface(surface);
     surface = nullptr;
@@ -41,11 +50,15 @@ void dealloc(SDL_Window*& window, std::vector<SDL_Surface*>& surfaces,
     texture = nullptr;
   }
 
-  SDL_DestroyWindow(window);
-  window = nullptr;
+  if (window) {
+    SDL_DestroyWindow(window);
+    window = nullptr;
+  }
 
-  SDL_DestroyRenderer(renderer);
-  renderer = nullptr;
+  if (renderer) {
+    SDL_DestroyRenderer(renderer);
+    renderer = nullptr;
+  }
 
   SDL_Quit();
 }
@@ -82,6 +95,13 @@ int main(int argc, char** argv) {
 
   (void)windowSurface;
 
+  int block = dDM.h / 22;
+
+  SDL_Rect playArea = initRect(dDM.h - 2 * block, dDM.h * 10 / 22,
+                               dDM.w / 5 + block, 0 + block);
+
+  SDL_Rect close = initRect(block, 2 * block, dDM.w - 2 * block, 0);
+
   uint8_t running = 1;
   SDL_Event event;
   while (running) {
@@ -91,12 +111,19 @@ int main(int argc, char** argv) {
           running = 0;
           break;
 
+        case SDL_MOUSEBUTTONDOWN:
+
         default:
           break;
       }
     }
+
     SDL_FillRect(windowSurface, NULL,
-                 SDL_MapRGB(windowSurface->format, 255, 255, 255));
+                 SDL_MapRGB(windowSurface->format, 124, 124, 124));
+    SDL_FillRect(windowSurface, &playArea,
+                 SDL_MapRGB(windowSurface->format, 0, 0, 0));
+    SDL_FillRect(windowSurface, &close,
+                 SDL_MapRGB(windowSurface->format, 200, 15, 15));
     SDL_UpdateWindowSurface(window);
   }
 
