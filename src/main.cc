@@ -32,12 +32,6 @@ std::vector<SDL_Texture*> textures;
 void dealloc(SDL_Window*&, std::vector<SDL_Surface*>&,
              std::vector<SDL_Texture*>&, SDL_Renderer*&& = nullptr);
 
-// void sigint_handler(int signal) {
-//   dealloc(window, surfaces, textures);
-//   std::cout << "Interrupt " << signal;
-//   return;
-// }
-
 void dealloc(SDL_Window*& window, std::vector<SDL_Surface*>& surfaces,
              std::vector<SDL_Texture*>&& textures = {},
              SDL_Renderer*&& renderer = nullptr) {
@@ -67,11 +61,17 @@ void dealloc(SDL_Window*& window, std::vector<SDL_Surface*>& surfaces,
 template <size_t _X, size_t _Y>
 using matrix = std::array<std::array<uint8_t, _Y>, _X>;
 
+using pieceMatrix = matrix<4, 4>;
+
+struct updateTickInput {
+ public:
+  matrix<10, 20> playfield{0};
+  uint8_t* position;
+  uint8_t& running;
+};
+
 int main(int argc, char** argv) {
   (void)argc, (void)argv;
-
-  // signal(SIGINT, sigint_handler);
-  // signal(SIGSEGV, sigint_handler);
 
   if (SDL_Init(SDL_INIT_EVERYTHING)) {
     return ret::SDL_INITIALISATION_FAILED;
@@ -99,12 +99,12 @@ int main(int argc, char** argv) {
 
   int block = dDM.h / 22;
 
-  SDL_Rect playArea = initRect(dDM.h - 2 * block, dDM.h * 10 / 22,
-                               dDM.w / 5 + block, 0 + block);
+  SDL_Rect playArea =
+      initRect(20 * block, 10 * block, dDM.w / 5 + block, 0 + block);
 
   SDL_Rect close = initRect(block, 2 * block, dDM.w - 2 * block, 0);
 
-  uint32_t closeRGB;
+  uint32_t closeRGB = 0;
 
   SDL_Point mousePos;
   mousePos.x = 0;
@@ -113,8 +113,17 @@ int main(int argc, char** argv) {
   uint8_t running = 1;
   SDL_Event event;
 
-  matrix<10, 20> playfield = {0};
+  matrix<10, 20> playfield{0};
+
+  SDL_Rect activeObject =
+      initRect(block, block, playArea.x + 4 * block, playArea.y);
+  playfield[8][0] = 1;
+  uint8_t point[2] = {8, 0};
+
   (void)playfield;
+
+  uint64_t current = SDL_GetTicks64(), next;
+  int16_t timeDelay = 1000;
 
   while (running) {
     while (SDL_PollEvent(&event)) {
@@ -144,11 +153,24 @@ int main(int argc, char** argv) {
       }
     }
 
+    // Timekeeping
+    next = SDL_GetTicks();
+    timeDelay -= next - current;
+    if (timeDelay <= 0 && point[1] < 19) {
+      activeObject.y += block;
+      current = next;
+      timeDelay = 500;
+      playfield[point[0]][point[1]] = 0;
+      playfield[point[0]][++point[1]] = 1;
+    }
+
     SDL_FillRect(windowSurface, NULL,
                  SDL_MapRGB(windowSurface->format, 124, 124, 124));
     SDL_FillRect(windowSurface, &playArea,
                  SDL_MapRGB(windowSurface->format, 0, 0, 0));
     SDL_FillRect(windowSurface, &close, closeRGB);
+    SDL_FillRect(windowSurface, &activeObject,
+                 SDL_MapRGB(windowSurface->format, 226, 229, 73));
     SDL_UpdateWindowSurface(window);
   }
 

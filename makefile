@@ -16,7 +16,7 @@ dbg: dbgc
 
 prod: $(src) 
 	rm -f $(prexe) 
-	$(CC) $(CCFLAGS) -o$(prexe) $(src) $(INC) $(LIN) $(DEF) $(STD) -O3
+	$(CC) $(CCFLAGS) -o$(prexe) $(src) $(INC) $(LIN) $(DEF) $(STD) -O3 -mwindows
 
 com: $(src)
 	rm -f $(exe)
@@ -25,7 +25,6 @@ com: $(src)
 dbgc: $(src) 
 	rm -f $(exe)
 	$(CC) $(CCFLAGS) -o$(exe) $(src) $(INC) $(LIN) $(DEF) $(STD) -g3 
-
 run: $(exe)
 	./$(exe)
 
