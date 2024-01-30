@@ -118,9 +118,7 @@ int main(int argc, char** argv) {
   SDL_Rect activeObject =
       initRect(block, block, playArea.x + 4 * block, playArea.y);
   playfield[8][0] = 1;
-  uint8_t point[2] = {8, 0};
-
-  (void)playfield;
+  uint8_t point[2] = {4, 0};
 
   uint64_t current = SDL_GetTicks64(), next;
   int16_t timeDelay = 1000;
@@ -148,6 +146,28 @@ int main(int argc, char** argv) {
           }
           break;
 
+        case SDL_KEYDOWN:
+          switch (event.key.keysym.sym) {
+            case SDLK_RIGHT:
+              if (point[0] < 9) {
+                activeObject.x += block;
+                playfield[point[0]][point[1]] = 0;
+                playfield[++point[0]][point[1]] = 1;
+              }
+              break;
+
+            case SDLK_LEFT:
+              if (point[0] > 0) {
+                activeObject.x -= block;
+                playfield[point[0]][point[1]] = 0;
+                playfield[--point[0]][point[1]] = 1;
+              }
+              break;
+
+            default:
+              break;
+          }
+
         default:
           break;
       }
@@ -163,6 +183,9 @@ int main(int argc, char** argv) {
       playfield[point[0]][point[1]] = 0;
       playfield[point[0]][++point[1]] = 1;
     }
+
+    if (point[1] == 19) {
+        }
 
     SDL_FillRect(windowSurface, NULL,
                  SDL_MapRGB(windowSurface->format, 124, 124, 124));
